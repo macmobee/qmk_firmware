@@ -1,6 +1,11 @@
 #include QMK_KEYBOARD_H
 #include "print.h"
 
+#define COMBO_ONLY_FROM_LAYER _DVORAK
+
+#define CONSOLE_ENBLE
+#define SHIFT_HELD_MAX 1000
+
 const key_override_t caret_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_AT, KC_CIRC);
 const key_override_t grave_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_HASH, KC_GRV);
 const key_override_t percent_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_AMPR, KC_PERC);
@@ -35,13 +40,12 @@ const key_override_t **key_overrides = (const key_override_t *[]){
 	NULL // Null terminate the array of overrides!
 };
 
-#define CONSOLE_ENBLE
-#define SHIFT_HELD_MAX 1000
-
 bool is_shift_active = false; // ADD this near the begining of keymap.c
 bool is_alt_active = false;
 bool is_ctrl_active = false;
 
+bool is_emacs_edit = true;     // toggle between GNU editing keys and standard keys
+  
 uint16_t shift_held_timer = 0;
 uint16_t alt_held_timer = 0;
 uint16_t ctrl_held_timer = 0;
@@ -64,7 +68,14 @@ enum custom_keycodes {
   EFUNC,
   KEYPAD,
   ADJUST,
-  /* EMACS custom keys */
+  /* General KEYS */
+    
+  /* EMACSm custom keys */
+  EM_MODE,
+  EM_UNDO,
+  EM_CUT,
+  EM_COPY,
+  EM_PASTE,
   EM_BOF,  // Begining of buffer
   EM_EOF,  // End of buffer
   EM_SAVE, // Save / write Buffer
@@ -89,12 +100,26 @@ enum custom_keycodes {
   EM_BDEL  // Delele word backword
 };
 
+enum combo_events {
+  SET_EDIT_MODE,
+  COMBO_LENGTH
+};
+uint16_t COMBO_LEN = COMBO_LENGTH; // remove the COMBO_COUNT define and use this instead!
+
+const uint16_t PROGMEM set_edit_mode[] = {KC_X, KC_M, COMBO_END};
+
+combo_t key_combos[] = {
+  [SET_EDIT_MODE] = COMBO_ACTION(set_edit_mode),
+};
+/* COMBO_ACTION(x) is same as COMBO(x, KC_NO) */
+
 // Aliases to make the keymap more uniform
 #define GUI_HOME GUI_T(KC_HOME)
 #define GUI_PGUP GUI_T(KC_PGUP)
 #define KPD_END LT(_KEYPAD, KC_END)
 #define KPD_PGDN LT(_KEYPAD, KC_PGDN)
-#define FUNC_SPC LT(_EFUNC, KC_SPC)
+#define FUNC_CAPS LT(_EFUNC, KC_CAPS)
+#define TG_MODE TO(_EFUNC)
 
 #define MACLOCK LGUI(LCTL(KC_Q))
 
@@ -140,8 +165,7 @@ enum custom_keycodes {
 	|--------+------+------+------+------+------||------+------+------+------+------+--------|
 	| CapsLk |   A  |   S  |   D  |   F  |   G  ||   H  |   J  |   K  |   L  |   ;  |   '    |
 	|--------+------+------+------+------+------||------+------+------+------+------+--------|
-	| LShift |   Z  |   X  |   C  |   V  |   B  ||   N  |   M  |   ,  |   .  |   /  | RShift |
-	`--------+------+------+------+------+------'`------+------+------+------+------+--------'
+	| LShift |   Z  |   X  |   C  |   V  |   B  ||   N  |   M  |   ,  |   .  |   /  | RShift |\\`--------+------+------+------+------+------'`------+------+------+------+------+--------'
 	         |   `  |  INS | Left | Rght |              |  Up  |  Dn  |   [  |   ]  |
 	         `---------------------------'              `---------------------------'
 	                             ,--------------.,--------------.
@@ -200,7 +224,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
            KC_ESC,  KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,
            KC_AMPR, KC_LBRC, KC_LCBR, KC_RCBR, KC_LPRN, KC_EQL,
            KC_TAB,  KC_SCLN, KC_COMM, KC_DOT,  KC_P,    KC_Y,
-           KC_CAPS, KC_A,    KC_O,    KC_E,    KC_U,    KC_I,
+           TG_MODE, KC_A,    KC_O,    KC_E,    KC_U,    KC_I,
            KC_LSFT, KC_QUOT, KC_Q,    KC_J,    KC_K,    KC_X,
                     KC_DLR,  KC_INS,  KC_LEFT, KC_RGHT,
            // Left Thumb
@@ -227,7 +251,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
            KC_ESC,  KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,
            KC_EQL,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,
            KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,
-           KC_CAPS, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,
+           TG_MODE, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,
            KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,
                     KC_GRV,  KC_INS,  KC_LEFT, KC_RGHT,
            // Left Thumb
@@ -254,8 +278,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	   LCTL(KC_G),  KC_F1,      KC_F2,      KC_F3,      KC_F4,      KC_F5,   KC_F6,   KC_F7,   KC_F8,
            KC_EQL,  KC_1,       KC_2,       KC_3,       KC_4,       KC_5,
            KC_TAB,  KC_Q,       KC_NO,      KC_BSPC,    KC_P,       KC_G,
-           KC_BSPC, LCTL(KC_X), KC_O,       KC_DEL,     KC_T,       KC_D,
-           KC_LSFT, LCTL(KC_Z), LCTL(KC_X), LCTL(KC_C), LCTL(KC_V), _______,
+           TG_MODE, LCTL(KC_X), KC_O,       KC_DEL,     KC_T,       KC_D,
+           KC_LSFT, EM_UNDO,    EM_CUT,     EM_COPY,    EM_PASTE,   _______,
                     KC_GRV,     KC_INS,     KC_LEFT,    KC_RGHT,
            // Left Thumb
                     KC_LCTL, KC_LALT,
@@ -489,8 +513,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (record->event.pressed) {
 #ifdef CONSOLE_ENABLE
       uprintf("Ctrl key Held!!!\n");
-#endif
-      is_ctrl_active = true;
+#endif 
+     is_ctrl_active = true;
       ctrl_held_timer = timer_read();
     } else{
       if (get_mods() & MOD_MASK_SHIFT) {
@@ -707,6 +731,18 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
  
 };
 
+void process_combo_event(uint16_t combo_index, bool pressed) {
+  switch(combo_index) {
+    case SET_EDIT_MODE:
+      if (pressed) {
+        is_emacs_edit = !is_emacs_edit;
+#ifdef CONSOLE_ENABLE
+	uprintf("EMACS Editing: %d \n", is_emacs_edit);
+#endif 
+      }
+      break;
+  }
+}
 
 void keyboard_post_init_user(void) {
   // Customise these values to desired behaviour
