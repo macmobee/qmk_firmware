@@ -331,7 +331,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		     KC_ESC,     KC_F1,      KC_F2,    KC_F3,    KC_F4,    KC_F5,   KC_F6,   KC_F7,   KC_F8,
 		     LCTL(KC_G), KC_NO,      EM_SPRV,  EM_SNXT,  KC_NO,    KC_NO,
 		     KC_NO,      EM_FORMAT,  KC_NO,    KC_NO,    KC_NO,    EM_WOPN,
-		     KC_CAPS,    LCTL(KC_X), EM_WPRV,  KC_NO,    EM_WPRV,  EM_WSAV,
+		     KC_CAPS,    LCTL(KC_X), EM_WPRV,  KC_NO,    EM_WNXT,  EM_WSAV,
 		     _______,    EM_COMMENT, EM_CUT,   EM_COPY,  EM_PASTE, EM_UNDO,
 		                 EM_KBUF,    KC_INS,  KC_LEFT,  KC_RGHT,
 		     // Left Thumb
@@ -1190,7 +1190,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       //Perspective Next
       if(is_emacs_edit){
 	// Ctrl+x Ctrl+f
-	send_string( SS_TAP(X_F6) "p");
+	send_string( SS_TAP(X_F6) "n");
       } else {
 	//
 	//send_string( SS_LCTL("f"));
@@ -1204,7 +1204,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       //Perspective Prev
       if(is_emacs_edit){
 	// Ctrl+x Ctrl+f
-	send_string( SS_TAP(X_F6) "n");
+	send_string( SS_TAP(X_F6) "p");
       } else {
 	//
 	//send_string( SS_LCTL("f"));
