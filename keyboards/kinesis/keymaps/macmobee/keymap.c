@@ -1130,11 +1130,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
     break; 
   case EM_PNXT:
-    if (record->event.pressed) {
-      //Projecile next buffer 
+    if (record->event.pressed) {      //Projecile next buffer 
       if(is_emacs_edit){
 	// Ctrl+x Ctrl+f
-	send_string( SS_TAP(X_F5) SS_TAP(X_RIGHT) );
+	send_string( SS_TAP(X_F5) ">");
       } else {
 	//
 	//send_string( SS_LCTL("f"));
@@ -1148,7 +1147,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       //Projecile prev buffer
       if(is_emacs_edit){
 	// Ctrl+x Ctrl+f
-	send_string( SS_TAP(X_F5) SS_TAP(X_LEFT) );
+	send_string( SS_TAP(X_F5) "<");
       } else {
 	//
 	//send_string( SS_LCTL("f"));
